@@ -1,70 +1,61 @@
 class PostsController < ApplicationController
-  before_action :set_post, only: %i[ show edit update destroy ]
+  before_action :authenticate_user!
 
-  # GET /posts or /posts.json
+  before_action :set_post, only: %i[show edit update destroy]
+
   def index
-    @posts = Post.all
+    @posts = policy_scope(Post)
   end
 
-  # GET /posts/1 or /posts/1.json
   def show
+    authorize @post
   end
 
-  # GET /posts/new
   def new
-    @post = Post.new
+    @post = current_user.posts.build
+    authorize @post
   end
 
-  # GET /posts/1/edit
-  def edit
-  end
-
-  # POST /posts or /posts.json
   def create
-    @post = Post.new(post_params)
+    @post = current_user.posts.build(post_params)
+    authorize @post
 
-    respond_to do |format|
-      if @post.save
-        format.html { redirect_to @post, notice: "Post was successfully created." }
-        format.json { render :show, status: :created, location: @post }
-      else
-        format.html { render :new, status: :unprocessable_content }
-        format.json { render json: @post.errors, status: :unprocessable_content }
-      end
+    if @post.save
+      redirect_to @post, notice: "Post created successfully."
+    else
+      render :new, status: :unprocessable_entity
     end
   end
 
-  # PATCH/PUT /posts/1 or /posts/1.json
+  def edit
+    authorize @post
+  end
+
   def update
-    respond_to do |format|
-      if @post.update(post_params)
-        format.html { redirect_to @post, notice: "Post was successfully updated.", status: :see_other }
-        format.json { render :show, status: :ok, location: @post }
-      else
-        format.html { render :edit, status: :unprocessable_content }
-        format.json { render json: @post.errors, status: :unprocessable_content }
-      end
+    authorize @post
+
+    if @post.update(post_params)
+      redirect_to @post, notice: "Post updated successfully."
+    else
+      render :edit, status: :unprocessable_entity
     end
   end
 
-  # DELETE /posts/1 or /posts/1.json
   def destroy
-    @post.destroy!
+    authorize @post
 
-    respond_to do |format|
-      format.html { redirect_to posts_path, notice: "Post was successfully destroyed.", status: :see_other }
-      format.json { head :no_content }
-    end
+    @post.destroy
+
+    redirect_to posts_path, notice: "Post deleted successfully."
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_post
-      @post = Post.find(params.expect(:id))
-    end
 
-    # Only allow a list of trusted parameters through.
-    def post_params
-      params.expect(post: [ :title, :body, :user_id ])
-    end
+  def set_post
+    @post = Post.find(params[:id])
+  end
+
+  def post_params
+    params.require(:post).permit(:title, :body)
+  end
 end

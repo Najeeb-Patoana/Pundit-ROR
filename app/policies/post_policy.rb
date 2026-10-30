@@ -5,10 +5,37 @@ class PostPolicy < ApplicationPolicy
   # code, beware of possible changes to the ancestors:
   # https://gist.github.com/Burgestrand/4b4bc22f31c8a95c425fc0e30d7ef1f5
 
-  class Scope < ApplicationPolicy::Scope
+  def show?
+    true
+  end
+
+  def create?
+    user.present?
+  end
+
+  def new?
+    create?
+  end
+
+  def update?
+    user.admin? || record.user_id == user.id
+  end
+
+  def edit?
+    update?
+  end
+
+  def destroy?
+    user.admin? || record.user_id == user.id
+  end
+
+  class Scope < Scope
     # NOTE: Be explicit about which records you allow access to!
     # def resolve
     #   scope.all
     # end
+    def resolve
+      scope.all
+    end
   end
 end
