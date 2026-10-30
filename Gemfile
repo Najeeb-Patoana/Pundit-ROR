@@ -67,3 +67,4 @@ end
 
 gem "devise"
 gem "pundit"
+gem 'fiddle'
